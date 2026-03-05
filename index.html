@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Record d'échange - 4ème EPS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 6px;
+    font-size: 1.5em;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.85em;
+    margin-bottom: 20px;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8em;
+  }
+  .legend-box {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .rouge   { background: #e74c3c; }
+  .orange  { background: #e67e22; }
+  .vertc   { background: #27ae60; }
+  .vertf   { background: #1a6b3c; }
+
+  .table-wrapper { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 750px;
+  }
+  thead th {
+    background: #16213e;
+    padding: 8px 6px;
+    font-size: 0.8em;
+    text-align: center;
+    border: 1px solid #333;
+  }
+  thead th:first-child { width: 140px; text-align: left; padding-left: 10px; }
+  thead th.col-moy { background: #0f3460; color: #f0c040; font-weight: bold; font-size: 0.8em; }
+  thead th input.coach-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #aaa;
+    color: #fff;
+    font-size: 0.85em;
+    width: 100%;
+    text-align: center;
+    outline: none;
+    padding: 2px;
+  }
+  thead th input.coach-input::placeholder { color: #777; }
+
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+  tbody td {
+    border: 1px solid #333;
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 0.85em;
+  }
+  tbody td:first-child {
+    text-align: left;
+    padding-left: 10px;
+    font-weight: 600;
+    background: #16213e;
+    white-space: nowrap;
+  }
+  tbody td input.eleve-name {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #555;
+    color: #eee;
+    font-size: 0.85em;
+    width: 120px;
+    outline: none;
+    padding: 2px;
+  }
+  tbody td input.eleve-name::placeholder { color: #666; }
+
+  td.moy-eleve {
+    background: #0f3460 !important;
+    color: #f0c040;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  tr.ligne-moy td {
+    background: #0f3460 !important;
+    color: #f0c040 !important;
+    font-weight: bold;
+    font-size: 0.85em;
+    border: 1px solid #1a5276;
+  }
+  tr.ligne-moy td:first-child {
+    background: #0a2744 !important;
+    color: #f0c040 !important;
+    font-size: 0.8em;
+  }
+  td.moy-generale {
+    background: #f39c12 !important;
+    color: #1a1a2e !important;
+    font-weight: bold;
+    font-size: 1em;
+  }
+
+  input.score {
+    width: 50px;
+    padding: 4px;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: bold;
+    background: #2c2c4a;
+    color: #fff;
+    outline: none;
+    transition: background 0.3s, color 0.3s;
+  }
+  input.score:focus { border: 1px solid #888; }
+  input.rouge { background: #e74c3c !important; color: #fff !important; }
+  input.orange { background: #e67e22 !important; color: #fff !important; }
+  input.vert-clair { background: #27ae60 !important; color: #fff !important; }
+  input.vert-fonce { background: #1a6b3c !important; color: #fff !important; }
+
+  .btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.85; }
+  .btn-reset { background: #e74c3c; color: #fff; }
+  .btn-print { background: #3498db; color: #fff; }
+  .btn-save  { background: #27ae60; color: #fff; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #16213e;
+    border: 2px solid #e74c3c;
+    border-radius: 12px;
+    padding: 30px 36px;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+  }
+  .modal h2 { color: #e74c3c; margin-bottom: 10px; font-size: 1.1em; }
+  .modal p  { color: #ccc; font-size: 0.9em; margin-bottom: 18px; }
+  .modal input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: #0f1e3c;
+    color: #fff;
+    font-size: 1em;
+    text-align: center;
+    margin-bottom: 16px;
+    outline: none;
+  }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+  .btn-confirm { background: #e74c3c; color: #fff; padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+  .btn-cancel  { background: #555; color: #fff; padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+
+  @media print {
+    body { background: #fff; color: #000; padding: 10px; }
+    h1, .subtitle { color: #000; }
+    .btn-row, .legend, .modal-overlay { display: none !important; }
+    table { min-width: unset; }
+    thead th { background: #ddd; color: #000; }
+    thead th.col-moy { background: #bbd; }
+    tbody td:first-child { background: #f0f0f0; }
+    input.score, input.coach-input, input.eleve-name { border: none !important; color: #000 !important; }
+    input.rouge { background: #e74c3c !important; }
+    input.orange { background: #e67e22 !important; }
+    input.vert-clair { background: #27ae60 !important; }
+    input.vert-fonce { background: #1a6b3c !important; }
+    td.moy-eleve { background: #d0e4ff !important; color: #000 !important; }
+    tr.ligne-moy td { background: #d0e4ff !important; color: #000 !important; }
+    td.moy-generale { background: #f39c12 !important; color: #000 !important; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🏸 Record d'échange — 4ème EPS</h1>
+<p class="subtitle">Saisissez les prénoms des coachs, les noms des élèves, puis entrez les scores</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-box rouge"></div> ≤ 3 échanges</div>
+  <div class="legend-item"><div class="legend-box orange"></div> 4 à 7 échanges</div>
+  <div class="legend-item"><div class="legend-box vertc"></div> 8 à 14 échanges</div>
+  <div class="legend-item"><div class="legend-box vertf"></div> ≥ 15 échanges</div>
+</div>
+
+<div class="table-wrapper">
+<table id="mainTable">
+  <thead>
+    <tr>
+      <th>Élève</th>
+      <th><input class="coach-input" type="text" placeholder="Coach 1" id="coach0"></th>
+      <th><input class="coach-input" type="text" placeholder="Coach 2" id="coach1"></th>
+      <th><input class="coach-input" type="text" placeholder="Coach 3" id="coach2"></th>
+      <th><input class="coach-input" type="text" placeholder="Coach 4" id="coach3"></th>
+      <th><input class="coach-input" type="text" placeholder="Coach 5" id="coach4"></th>
+      <th><input class="coach-input" type="text" placeholder="Coach 6" id="coach5"></th>
+      <th class="col-moy">⌀ Moy. élève</th>
+    </tr>
+  </thead>
+  <tbody id="tbody">
+  </tbody>
+</table>
+</div>
+
+<div class="btn-row">
+  <button class="btn-reset" onclick="openModal()">🔄 Réinitialiser scores</button>
+  <button class="btn-save" onclick="saveData()">💾 Sauvegarder</button>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
+</div>
+
+<!-- Modal code PIN -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>🔒 Réinitialisation</h2>
+    <p>Entrez le code PIN pour réinitialiser tous les scores.</p>
+    <input type="password" id="pinInput" placeholder="Code PIN" maxlength="6" onkeydown="if(event.key==='Enter') confirmReset()">
+    <div id="pinError" style="color:#e74c3c; font-size:0.8em; margin-bottom:10px; display:none;">❌ Code incorrect</div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="confirmReset()">Confirmer</button>
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NB_ELEVES = 23;
+const NB_COACHES = 6;
+const PIN_CODE = "1234"; // ← Change ce code ici
+
+function getColorClass(val) {
+  if (val === '' || isNaN(val) || val === null) return '';
+  const n = parseInt(val);
+  if (n <= 3)  return 'rouge';
+  if (n <= 7)  return 'orange';
+  if (n <= 14) return 'vert-clair';
+  return 'vert-fonce';
+}
+
+function buildTable() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  for (let i = 0; i < NB_ELEVES; i++) {
+    const tr = document.createElement('tr');
+
+    // Nom élève
+    const tdName = document.createElement('td');
+    tdName.innerHTML = `<input class="eleve-name" type="text" placeholder="Élève ${i+1}" id="eleve${i}">`;
+    tr.appendChild(tdName);
+
+    // Scores
+    for (let j = 0; j < NB_COACHES; j++) {
+      const td = document.createElement('td');
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.min = 0;
+      inp.className = 'score';
+      inp.id = `s_${i}_${j}`;
+      inp.addEventListener('input', function() {
+        this.className = 'score ' + getColorClass(this.value);
+        updateAverages();
+        saveData();
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+    }
+
+    // Moyenne élève
+    const tdMoy = document.createElement('td');
+    tdMoy.className = 'moy-eleve';
+    tdMoy.id = `moy_eleve_${i}`;
+    tdMoy.textContent = '—';
+    tr.appendChild(tdMoy);
+
+    tbody.appendChild(tr);
+  }
+
+  // Ligne moyenne coach
+  const trMoy = document.createElement('tr');
+  trMoy.className = 'ligne-moy';
+  const tdLabel = document.createElement('td');
+  tdLabel.textContent = '⌀ Moy. coach';
+  trMoy.appendChild(tdLabel);
+
+  for (let j = 0; j < NB_COACHES; j++) {
+    const td = document.createElement('td');
+    td.id = `moy_coach_${j}`;
+    td.textContent = '—';
+    trMoy.appendChild(td);
+  }
+
+  // Cellule moyenne générale
+  const tdGen = document.createElement('td');
+  tdGen.id = 'moy_generale';
+  tdGen.className = 'moy-generale';
+  tdGen.textContent = '—';
+  trMoy.appendChild(tdGen);
+
+  tbody.appendChild(trMoy);
+}
+
+function updateAverages() {
+  let allVals = [];
+
+  // Moyenne par élève (ligne)
+  for (let i = 0; i < NB_ELEVES; i++) {
+    let vals = [];
+    for (let j = 0; j < NB_COACHES; j++) {
+      const v = document.getElementById(`s_${i}_${j}`).value;
+      if (v !== '' && !isNaN(v)) vals.push(parseInt(v));
+    }
+    const cell = document.getElementById(`moy_eleve_${i}`);
+    if (vals.length > 0) {
+      const avg = (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
+      cell.textContent = avg;
+      allVals.push(...vals);
+    } else {
+      cell.textContent = '—';
+    }
+  }
+
+  // Moyenne par coach (colonne)
+  for (let j = 0; j < NB_COACHES; j++) {
+    let vals = [];
+    for (let i = 0; i < NB_ELEVES; i++) {
+      const v = document.getElementById(`s_${i}_${j}`).value;
+      if (v !== '' && !isNaN(v)) vals.push(parseInt(v));
+    }
+    const cell = document.getElementById(`moy_coach_${j}`);
+    if (vals.length > 0) {
+      cell.textContent = (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
+    } else {
+      cell.textContent = '—';
+    }
+  }
+
+  // Moyenne générale
+  const gen = document.getElementById('moy_generale');
+  if (allVals.length > 0) {
+    gen.textContent = (allVals.reduce((a,b)=>a+b,0) / allVals.length).toFixed(1);
+  } else {
+    gen.textContent = '—';
+  }
+}
+
+// Modal PIN
+function openModal() {
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('pinInput').focus(), 100);
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+function confirmReset() {
+  const pin = document.getElementById('pinInput').value;
+  if (pin === PIN_CODE) {
+    closeModal();
+    doReset();
+  } else {
+    document.getElementById('pinError').style.display = 'block';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').focus();
+  }
+}
+function doReset() {
+  for (let i = 0; i < NB_ELEVES; i++)
+    for (let j = 0; j < NB_COACHES; j++) {
+      const inp = document.getElementById(`s_${i}_${j}`);
+      inp.value = '';
+      inp.className = 'score';
+    }
+  updateAverages();
+  saveData();
+}
+
+function saveData() {
+  const data = { coaches: [], eleves: [], scores: [] };
+  for (let j = 0; j < NB_COACHES; j++)
+    data.coaches.push(document.getElementById(`coach${j}`).value);
+  for (let i = 0; i < NB_ELEVES; i++) {
+    data.eleves.push(document.getElementById(`eleve${i}`).value);
+    const row = [];
+    for (let j = 0; j < NB_COACHES; j++)
+      row.push(document.getElementById(`s_${i}_${j}`).value);
+    data.scores.push(row);
+  }
+  localStorage.setItem('eps_record', JSON.stringify(data));
+}
+
+function loadData() {
+  const raw = localStorage.getItem('eps_record');
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  for (let j = 0; j < NB_COACHES; j++)
+    if (data.coaches[j]) document.getElementById(`coach${j}`).value = data.coaches[j];
+  for (let i = 0; i < NB_ELEVES; i++) {
+    if (data.eleves[i]) document.getElementById(`eleve${i}`).value = data.eleves[i];
+    for (let j = 0; j < NB_COACHES; j++) {
+      const inp = document.getElementById(`s_${i}_${j}`);
+      if (data.scores[i] && data.scores[i][j] !== '') {
+        inp.value = data.scores[i][j];
+        inp.className = 'score ' + getColorClass(data.scores[i][j]);
+      }
+    }
+  }
+  updateAverages();
+}
+
+// Listeners coachs + élèves
+for (let j = 0; j < NB_COACHES; j++)
+  document.getElementById(`coach${j}`).addEventListener('input', saveData);
+
+buildTable();
+loadData();
+
+for (let i = 0; i < NB_ELEVES; i++)
+  document.getElementById(`eleve${i}`).addEventListener('input', saveData);
+</script>
+</body>
+</html>
